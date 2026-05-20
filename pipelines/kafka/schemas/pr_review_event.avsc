@@ -1,0 +1,41 @@
+{
+  "type": "record",
+  "name": "PrReviewEvent",
+  "namespace": "com.stas.telemetry",
+  "doc": "A pull request review interaction between two engineers, derived from GitHub webhooks.",
+  "fields": [
+    {
+      "name": "event_id",
+      "type": "string",
+      "doc": "Globally unique event ID — used as idempotency key in the Neo4j ProcessedEvent node."
+    },
+    {
+      "name": "reviewer_id",
+      "type": "string",
+      "doc": "Engineer.id of the reviewer. Anonymized to UUID in production; GitHub handle in dev."
+    },
+    {
+      "name": "author_id",
+      "type": "string",
+      "doc": "Engineer.id of the PR author."
+    },
+    {
+      "name": "repo",
+      "type": "string",
+      "doc": "Repository full name, e.g. 'org/service-name'."
+    },
+    {
+      "name": "pr_number",
+      "type": "int",
+      "doc": "Pull request number within the repository."
+    },
+    {
+      "name": "timestamp",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Event timestamp in epoch milliseconds (UTC)."
+    }
+  ]
+}

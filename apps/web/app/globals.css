@@ -1,0 +1,53 @@
+:root {
+  --primary:    #003366;
+  --primary-80: #1A4D80;
+  --primary-60: #336699;
+  --primary-30: #99BBDD;
+  --primary-10: #E0EAF4;
+  --gold:       #C8982A;
+  --gold-light: #E8C46A;
+  --dark:       #1C1C2E;
+  --mid:        #6B7280;
+  --light:      #F4F6F9;
+  --white:      #FFFFFF;
+  --fd:         'Fraunces', Georgia, serif;
+  --fb:         'Plus Jakarta Sans', sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--light);
+  color: var(--dark);
+  font-family: var(--fb);
+  font-size: 15px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Dark mode — follows system preference ─────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --light:  #111827;
+    --white:  #1F2937;
+    --dark:   #F9FAFB;
+    --mid:    #9CA3AF;
+    /* Primary and gold remain the same — they sit on dark backgrounds already */
+    --primary-10: rgba(0, 51, 102, 0.4);
+  }
+
+  body {
+    background: var(--light);
+    color: var(--dark);
+  }
+}

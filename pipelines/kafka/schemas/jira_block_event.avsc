@@ -1,0 +1,41 @@
+{
+  "type": "record",
+  "name": "JiraBlockEvent",
+  "namespace": "com.stas.telemetry",
+  "doc": "A Jira ticket block dependency: one engineer's work was blocked by another's.",
+  "fields": [
+    {
+      "name": "event_id",
+      "type": "string",
+      "doc": "Globally unique event ID — idempotency key."
+    },
+    {
+      "name": "blocker_id",
+      "type": "string",
+      "doc": "Engineer.id of the person whose work was blocking (upstream dependency)."
+    },
+    {
+      "name": "blocked_id",
+      "type": "string",
+      "doc": "Engineer.id of the person who was blocked."
+    },
+    {
+      "name": "issue_key",
+      "type": "string",
+      "doc": "Jira issue key, e.g. 'PLAT-1234'."
+    },
+    {
+      "name": "duration_hours",
+      "type": "float",
+      "doc": "How long the block lasted, in hours."
+    },
+    {
+      "name": "timestamp",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Timestamp when the block was resolved, in epoch milliseconds (UTC)."
+    }
+  ]
+}

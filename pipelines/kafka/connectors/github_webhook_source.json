@@ -1,0 +1,36 @@
+{
+  "_doc": [
+    "GitHub webhook bridge configuration.",
+    "GitHub is push-based — it sends events to us, not the reverse.",
+    "The STAS FastAPI endpoint POST /telemetry/github/webhook receives the payload,",
+    "validates the X-Hub-Signature-256 header, and produces to stas.github.pr.reviewed.",
+    "",
+    "To register this webhook in GitHub:",
+    "  Settings → Webhooks → Add webhook",
+    "    Payload URL:   https://<your-domain>/telemetry/github/webhook",
+    "    Content type:  application/json",
+    "    Secret:        <value of GITHUB_WEBHOOK_SECRET env var>",
+    "    Events:        Pull request reviews",
+    "",
+    "This file documents the configuration; the actual logic is in",
+    "apps/api/routers/telemetry.py::receive_github_webhook."
+  ],
+  "name": "stas-github-pr-webhook-bridge",
+  "source": {
+    "type": "webhook",
+    "endpoint": "/telemetry/github/webhook",
+    "signature_header": "X-Hub-Signature-256",
+    "signature_algorithm": "hmac-sha256",
+    "secret_env": "GITHUB_WEBHOOK_SECRET"
+  },
+  "sink": {
+    "topic": "stas.github.pr.reviewed",
+    "schema": "pipelines/kafka/schemas/pr_review_event.avsc",
+    "serialization": "avro-schemaless"
+  },
+  "filter": {
+    "github_event_header": "pull_request_review",
+    "action": ["submitted"],
+    "review_state": ["approved", "changes_requested", "commented"]
+  }
+}

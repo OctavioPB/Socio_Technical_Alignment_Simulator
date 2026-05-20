@@ -1,0 +1,14 @@
+apiVersion: v2
+name: stas
+description: Socio-Technical Alignment Simulator — full stack Helm chart
+type: application
+version: 0.4.0
+appVersion: "0.4.0"
+keywords:
+  - graph
+  - simulation
+  - hiring
+  - neo4j
+maintainers:
+  - name: STAS Engineering
+    email: engineering@stas.io

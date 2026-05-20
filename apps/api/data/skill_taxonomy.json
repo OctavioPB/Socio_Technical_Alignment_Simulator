@@ -1,0 +1,129 @@
+{
+  "Backend": {
+    "Python Ecosystem": [
+      "python", "fastapi", "django", "flask", "sqlalchemy", "celery",
+      "pydantic", "uvicorn", "starlette", "aiohttp"
+    ],
+    "JVM Ecosystem": [
+      "java", "kotlin", "scala", "spring", "spring-boot",
+      "quarkus", "micronaut", "gradle", "maven"
+    ],
+    "Go Ecosystem": [
+      "go", "gin", "echo", "fiber", "grpc-go", "cobra"
+    ],
+    "Rust Ecosystem": [
+      "rust", "tokio", "actix-web", "axum", "serde", "sqlx"
+    ],
+    "Node.js Ecosystem": [
+      "nodejs", "express", "nestjs", "hapi", "koa", "fastify"
+    ],
+    ".NET Ecosystem": [
+      "csharp", "dotnet", "aspnet", "entity-framework", "fsharp"
+    ]
+  },
+  "Frontend": {
+    "React Ecosystem": [
+      "react", "nextjs", "zustand", "redux", "react-query",
+      "tanstack-query", "react-router", "remix"
+    ],
+    "Vue Ecosystem": [
+      "vue", "nuxt", "pinia", "vuex", "vite"
+    ],
+    "Angular Ecosystem": [
+      "angular", "rxjs", "ngrx", "angular-material"
+    ],
+    "Core Web": [
+      "html", "css", "tailwindcss", "typescript", "javascript",
+      "webpack", "vite", "esbuild", "sass", "css-modules"
+    ],
+    "Testing": [
+      "vitest", "jest", "playwright", "cypress", "testing-library"
+    ]
+  },
+  "Data": {
+    "Data Engineering": [
+      "spark", "airflow", "dbt", "kafka", "flink", "beam",
+      "dagster", "prefect", "dask", "ray"
+    ],
+    "Data Science": [
+      "pandas", "numpy", "scipy", "jupyter", "polars",
+      "matplotlib", "seaborn", "plotly"
+    ],
+    "Machine Learning": [
+      "pytorch", "tensorflow", "transformers", "scikit-learn",
+      "xgboost", "lightgbm", "catboost", "optuna", "mlflow"
+    ],
+    "LLM / AI": [
+      "langchain", "llama-index", "anthropic", "openai",
+      "huggingface", "rag", "embeddings", "prompt-engineering"
+    ],
+    "Graph": [
+      "neo4j", "networkx", "graphql", "tigergraph",
+      "janusgraph", "arangodb", "gremlin", "cypher"
+    ]
+  },
+  "Infrastructure": {
+    "Cloud": [
+      "aws", "gcp", "azure", "cloudflare", "vercel", "fly.io", "render"
+    ],
+    "Containers": [
+      "docker", "kubernetes", "helm", "istio", "envoy",
+      "containerd", "podman", "openshift"
+    ],
+    "Infrastructure as Code": [
+      "terraform", "pulumi", "ansible", "chef", "puppet",
+      "crossplane", "cdk", "cloudformation"
+    ],
+    "Observability": [
+      "prometheus", "grafana", "opentelemetry", "datadog",
+      "newrelic", "jaeger", "zipkin", "loki"
+    ],
+    "Networking": [
+      "nginx", "traefik", "haproxy", "envoy", "grpc", "rest", "graphql"
+    ]
+  },
+  "Databases": {
+    "Relational": [
+      "postgresql", "mysql", "sqlite", "cockroachdb",
+      "tidb", "aurora", "alloydb"
+    ],
+    "NoSQL Document": [
+      "mongodb", "firestore", "couchdb", "dynamodb"
+    ],
+    "NoSQL Wide-Column": [
+      "cassandra", "bigtable", "hbase", "scylladb"
+    ],
+    "Cache / KV": [
+      "redis", "memcached", "dragonfly", "valkey"
+    ],
+    "Search": [
+      "elasticsearch", "opensearch", "meilisearch", "typesense", "solr"
+    ],
+    "Vector": [
+      "pgvector", "pinecone", "weaviate", "qdrant", "milvus", "chroma"
+    ],
+    "Time Series": [
+      "timescaledb", "influxdb", "questdb", "clickhouse"
+    ]
+  },
+  "Platform": {
+    "CI/CD": [
+      "github-actions", "gitlab-ci", "jenkins", "circleci",
+      "buildkite", "tekton", "argocd", "flux"
+    ],
+    "Version Control": [
+      "git", "github", "gitlab", "bitbucket"
+    ],
+    "API Design": [
+      "rest", "graphql", "grpc", "openapi", "asyncapi", "websockets", "sse"
+    ],
+    "Security": [
+      "oauth2", "jwt", "oidc", "vault", "sops",
+      "trivy", "snyk", "owasp"
+    ],
+    "Testing": [
+      "pytest", "jest", "junit", "go-test", "hypothesis",
+      "testcontainers", "pact", "k6", "locust"
+    ]
+  }
+}

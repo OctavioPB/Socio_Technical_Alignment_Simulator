@@ -1,0 +1,37 @@
+{
+  "name": "stas-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "^5.7.0",
+    "next": "14.2.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-force-graph-2d": "^1.25.5",
+    "zustand": "^4.5.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.45.0",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "typescript": "^5",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.3",
+    "vitest": "^1.6.0",
+    "@testing-library/react": "^16",
+    "@testing-library/user-event": "^14",
+    "@vitejs/plugin-react": "^4",
+    "jsdom": "^24"
+  }
+}

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: stas-config
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "stas.labels" . | nindent 4 }}
+data:
+  NEO4J_URI: {{ .Values.config.neo4jUri | quote }}
+  KAFKA_BOOTSTRAP_SERVERS: {{ .Values.config.kafkaBootstrapServers | quote }}
+  REDIS_URL: {{ .Values.config.redisUrl | quote }}
+  SIMULATION_GDS_THRESHOLD: {{ .Values.config.simulationGdsThreshold | quote }}
+  LOG_LEVEL: {{ .Values.config.logLevel | quote }}
+  LOG_FORMAT: {{ .Values.config.logFormat | quote }}
+  METRICS_ENABLED: {{ .Values.config.metricsEnabled | quote }}
+  ENVIRONMENT: {{ .Values.config.environment | quote }}
+  CORS_ORIGINS: {{ .Values.config.corsOrigins | quote }}
+  NEXT_PUBLIC_API_URL: "https://{{ .Values.ingress.apiHost }}"
+  NEXT_PUBLIC_APP_URL: "https://{{ .Values.ingress.webHost }}"

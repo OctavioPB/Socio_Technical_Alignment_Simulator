@@ -1,0 +1,280 @@
+name: stas
+
+# ─── Shared Airflow config ────────────────────────────────────────────────────
+x-airflow-common: &airflow-common
+  image: apache/airflow:2.8.0
+  env_file: .env
+  environment:
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+    # Dev-only Fernet key — replace via Vault in prod
+    AIRFLOW__CORE__FERNET_KEY: "ZmDfcTF7_60GrrY167zsiPd67pEvs0aGOv2oasOM1Pg="
+    AIRFLOW__WEBSERVER__SECRET_KEY: "stas-dev-secret-change-in-prod"
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: "true"
+    # Override service hostnames for the Docker network
+    NEO4J_URI: bolt://neo4j:7687
+    KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    # Install STAS runtime deps into the Airflow image at startup
+    _PIP_ADDITIONAL_REQUIREMENTS: "neo4j>=5.19 aiokafka>=0.11 networkx>=3.3"
+  volumes:
+    - ./pipelines/airflow/dags:/opt/airflow/dags
+    - ./pipelines/airflow/operators:/opt/airflow/plugins
+    - airflow-logs:/opt/airflow/logs
+  depends_on:
+    postgres:
+      condition: service_healthy
+  networks:
+    - stas-net
+
+services:
+  # ─── Graph DB ──────────────────────────────────────────────────────────────
+  neo4j:
+    image: neo4j:5.19-community
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:-changeme_dev}
+      NEO4J_PLUGINS: '["apoc","graph-data-science"]'
+      NEO4J_dbms_security_procedures_unrestricted: "apoc.*,gds.*"
+    ports:
+      - "7474:7474"   # Browser
+      - "7687:7687"   # Bolt
+    volumes:
+      - neo4j-data:/data
+      - neo4j-logs:/logs
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "${NEO4J_PASSWORD:-changeme_dev}", "RETURN 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    networks:
+      - stas-net
+
+  # ─── Message Bus ───────────────────────────────────────────────────────────
+  kafka:
+    image: bitnami/kafka:3.7
+    environment:
+      KAFKA_CFG_NODE_ID: "1"
+      KAFKA_CFG_PROCESS_ROLES: "controller,broker"
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+      KAFKA_CFG_LISTENERS: "PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094"
+      KAFKA_CFG_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094"
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    ports:
+      - "9094:9094"   # External access from host
+    volumes:
+      - kafka-data:/bitnami/kafka
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions.sh", "--bootstrap-server", "localhost:9092"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    networks:
+      - stas-net
+
+  # ─── Airflow metadata DB ───────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - stas-net
+
+  # ─── Airflow init (one-shot) ───────────────────────────────────────────────
+  airflow-init:
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db migrate &&
+        airflow users create \
+          --username admin \
+          --password ${AIRFLOW_ADMIN_PASSWORD:-admin} \
+          --firstname Admin \
+          --lastname User \
+          --role Admin \
+          --email admin@stas.local
+    restart: "no"
+
+  # ─── Airflow webserver ─────────────────────────────────────────────────────
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  # ─── Airflow scheduler ─────────────────────────────────────────────────────
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    healthcheck:
+      test: ["CMD", "airflow", "jobs", "check", "--job-type", "SchedulerJob", "--limit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  # ─── Redis (NLP agent cache) ───────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - stas-net
+
+  # ─── FastAPI ───────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    env_file: .env
+    environment:
+      NEO4J_URI: bolt://neo4j:7687
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./apps/api:/app/apps/api
+      - ./simulation:/app/simulation
+      - ./pipelines:/app/pipelines
+    depends_on:
+      neo4j:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - stas-net
+
+  # ─── Telemetry consumer service ───────────────────────────────────────────
+  telemetry:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    command: python -m pipelines.kafka.consumer_main
+    env_file: .env
+    environment:
+      NEO4J_URI: bolt://neo4j:7687
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      METRICS_PORT: "9090"
+    ports:
+      - "9090:9090"   # Prometheus metrics
+    volumes:
+      - ./pipelines:/app/pipelines
+      - ./apps/api:/app/apps/api
+    depends_on:
+      neo4j:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    restart: on-failure
+    networks:
+      - stas-net
+
+  # ─── Next.js ───────────────────────────────────────────────────────────────
+  web:
+    build:
+      context: apps/web
+      dockerfile: ../../docker/Dockerfile.web
+      target: dev
+    env_file: .env
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - stas-net
+
+  # ─── Prometheus ───────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.enable-lifecycle"
+    networks:
+      - stas-net
+
+  # ─── Grafana ───────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.2
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_INSTALL_PLUGINS: ""
+    volumes:
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - stas-net
+
+networks:
+  stas-net:
+    driver: bridge
+
+volumes:
+  neo4j-data:
+  neo4j-logs:
+  kafka-data:
+  postgres-data:
+  redis-data:
+  airflow-logs:
+  prometheus-data:
+  grafana-data:

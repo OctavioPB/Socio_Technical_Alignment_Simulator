@@ -1,0 +1,39 @@
+{
+  "_doc": [
+    "Slack Events API bridge configuration.",
+    "Slack sends events to our endpoint via the Events API (push-based).",
+    "The STAS FastAPI endpoint POST /telemetry/slack/webhook receives events,",
+    "validates via X-Slack-Signature, and produces resolved threads to stas.slack.thread.resolved.",
+    "",
+    "To configure in Slack App settings:",
+    "  Event Subscriptions → Enable Events",
+    "    Request URL:  https://<your-domain>/telemetry/slack/webhook",
+    "  Subscribe to bot events:",
+    "    message.channels — to detect resolved threads",
+    "    reaction_added   — to detect :white_check_mark: / :+1: reactions",
+    "",
+    "Thread resolution heuristic:",
+    "  A thread is considered 'resolved' when the asker adds a positive reaction",
+    "  (:white_check_mark:, :+1:, :thanks:) to the helper's message.",
+    "",
+    "This file documents the configuration; logic is in",
+    "apps/api/routers/telemetry.py::receive_slack_event."
+  ],
+  "name": "stas-slack-thread-webhook-bridge",
+  "source": {
+    "type": "webhook",
+    "endpoint": "/telemetry/slack/webhook",
+    "signature_header": "X-Slack-Signature",
+    "signature_algorithm": "hmac-sha256",
+    "secret_env": "SLACK_SIGNING_SECRET"
+  },
+  "sink": {
+    "topic": "stas.slack.thread.resolved",
+    "schema": "pipelines/kafka/schemas/slack_thread_event.avsc",
+    "serialization": "avro-schemaless"
+  },
+  "filter": {
+    "event_types": ["reaction_added"],
+    "positive_reactions": ["white_check_mark", "+1", "thanks", "heavy_check_mark"]
+  }
+}

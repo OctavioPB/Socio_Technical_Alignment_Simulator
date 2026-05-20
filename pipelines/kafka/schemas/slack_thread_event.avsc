@@ -1,0 +1,46 @@
+{
+  "type": "record",
+  "name": "SlackThreadEvent",
+  "namespace": "com.stas.telemetry",
+  "doc": "A resolved Slack thread where one engineer answered another's question.",
+  "fields": [
+    {
+      "name": "event_id",
+      "type": "string",
+      "doc": "Globally unique event ID — idempotency key."
+    },
+    {
+      "name": "helper_id",
+      "type": "string",
+      "doc": "Engineer.id of the person who answered the question (knowledge provider)."
+    },
+    {
+      "name": "asker_id",
+      "type": "string",
+      "doc": "Engineer.id of the person who asked the question (knowledge consumer)."
+    },
+    {
+      "name": "channel",
+      "type": "string",
+      "doc": "Slack channel ID (not name — channel names change, IDs do not)."
+    },
+    {
+      "name": "thread_ts",
+      "type": "string",
+      "doc": "Slack thread timestamp string — unique identifier for the thread."
+    },
+    {
+      "name": "resolved",
+      "type": "boolean",
+      "doc": "True if the thread was marked resolved or received a positive reaction."
+    },
+    {
+      "name": "timestamp",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Resolution timestamp in epoch milliseconds (UTC)."
+    }
+  ]
+}

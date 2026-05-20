@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: stas-web
+  namespace: stas
+  labels:
+    app: stas-web
+spec:
+  selector:
+    app: stas-web
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+  type: ClusterIP

@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ─── Python linting ──────────────────────────────────────────────────────────
+  python-lint:
+    name: Python Lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - run: pip install ruff
+      - run: ruff check apps/api simulation pipelines
+
+  # ─── Python tests ────────────────────────────────────────────────────────────
+  python-test:
+    name: Python Tests
+    runs-on: ubuntu-latest
+    services:
+      neo4j:
+        image: neo4j:5.19-community
+        env:
+          NEO4J_AUTH: neo4j/testpassword
+          NEO4J_PLUGINS: '["apoc","graph-data-science"]'
+          NEO4J_dbms_security_procedures_unrestricted: "apoc.*,gds.*"
+        ports:
+          - 7687:7687
+        options: >-
+          --health-cmd "cypher-shell -u neo4j -p testpassword 'RETURN 1'"
+          --health-interval 15s
+          --health-timeout 10s
+          --health-retries 10
+          --health-start-period 30s
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - run: pip install -e ".[dev]"
+      - run: pytest tests/ simulation/tests/ -v --cov --cov-report=xml
+        env:
+          NEO4J_URI: bolt://localhost:7687
+          NEO4J_USER: neo4j
+          NEO4J_PASSWORD: testpassword
+          SIMULATION_GDS_THRESHOLD: "200"
+          ANTHROPIC_API_KEY: "sk-ant-test"
+          KAFKA_BOOTSTRAP_SERVERS: "localhost:9092"
+          REDIS_URL: "redis://localhost:6379"
+          GITHUB_WEBHOOK_SECRET: ""
+          SLACK_SIGNING_SECRET: ""
+          JIRA_WEBHOOK_SECRET: ""
+      - uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml
+        if: always()
+
+  # ─── TypeScript linting ──────────────────────────────────────────────────────
+  typescript-lint:
+    name: TypeScript Lint (eslint)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+
+  # ─── Next.js build ───────────────────────────────────────────────────────────
+  typescript-build:
+    name: Next.js Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8000
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_placeholder

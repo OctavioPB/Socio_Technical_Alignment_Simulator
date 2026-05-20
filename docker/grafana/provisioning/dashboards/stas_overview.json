@@ -1,0 +1,103 @@
+{
+  "title": "STAS Overview",
+  "uid": "stas-overview",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-3h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Simulation Throughput (req/min)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "rate(stas_http_requests_total{path=~\"/simulation/run.*\",status_code=\"200\"}[2m]) * 60",
+          "legendFormat": "successful runs/min"
+        },
+        {
+          "expr": "rate(stas_http_requests_total{path=~\"/simulation/run.*\",status_code=\"429\"}[2m]) * 60",
+          "legendFormat": "rate-limited/min"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Simulation Duration p50/p95/p99 (seconds)",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(stas_simulation_duration_seconds_bucket[5m]))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(stas_simulation_duration_seconds_bucket[5m]))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(stas_simulation_duration_seconds_bucket[5m]))",
+          "legendFormat": "p99"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "NLP Extraction Latency p50/p95 (seconds)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(stas_nlp_extraction_latency_seconds_bucket{cached=\"false\"}[5m]))",
+          "legendFormat": "p50 (uncached)"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(stas_nlp_extraction_latency_seconds_bucket{cached=\"false\"}[5m]))",
+          "legendFormat": "p95 (uncached)"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "API p99 Latency by Endpoint (seconds)",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum by(path) (rate(stas_http_request_duration_seconds_bucket[5m])))",
+          "legendFormat": "{{path}}"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Kafka Consumer Lag (seconds)",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 16, "w": 8, "h": 4 },
+      "targets": [
+        {
+          "expr": "max(stas_kafka_consumer_lag_seconds) by (topic)",
+          "legendFormat": "{{topic}}"
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 6,
+      "title": "HTTP Error Rate (4xx/5xx)",
+      "type": "timeseries",
+      "gridPos": { "x": 8, "y": 16, "w": 16, "h": 4 },
+      "targets": [
+        {
+          "expr": "rate(stas_http_requests_total{status_code=~\"4..\"}[2m]) * 60",
+          "legendFormat": "4xx/min"
+        },
+        {
+          "expr": "rate(stas_http_requests_total{status_code=~\"5..\"}[2m]) * 60",
+          "legendFormat": "5xx/min"
+        }
+      ]
+    }
+  ]
+}

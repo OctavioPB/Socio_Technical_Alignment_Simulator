@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stas-web
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: stas-web
+    {{- include "stas.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.web.replicaCount }}
+  selector:
+    matchLabels:
+      app: stas-web
+  template:
+    metadata:
+      labels:
+        app: stas-web
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: web
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.web.image.name }}:{{ .Values.global.imageTag }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.web.service.targetPort }}
+          envFrom:
+            - configMapRef:
+                name: stas-config
+            - secretRef:
+                name: {{ .Values.secrets.existingSecret }}
+          env:
+            - name: API_URL
+              value: "http://stas-api.{{ .Values.global.namespace }}.svc.cluster.local"
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: {{ .Values.web.service.targetPort }}
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          resources:
+            {{- toYaml .Values.web.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1001
+            capabilities:
+              drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stas-web
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: stas-web
+spec:
+  selector:
+    app: stas-web
+  ports:
+    - port: {{ .Values.web.service.port }}
+      targetPort: {{ .Values.web.service.targetPort }}
+  type: ClusterIP

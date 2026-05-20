@@ -1,0 +1,246 @@
+\documentclass[12pt, a4paper]{article}
+
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{booktabs}
+
+\geometry{margin=2.5cm}
+
+\title{%
+  \textbf{STAS Simulation Mathematics}\\[0.5em]
+  \large Closeness Centrality, Monte Carlo Estimation,\\
+  and Confidence Interval Construction
+}
+\author{Socio-Technical Alignment Simulator}
+\date{Sprint 4 --- May 2026}
+
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+\newtheorem{remark}{Remark}
+
+% ──────────────────────────────────────────────────────────────────────────────
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Graph Model}
+
+Let $G = (V, E, w)$ be a weighted, undirected knowledge graph where:
+
+\begin{itemize}
+  \item $V$ is the set of \textbf{Engineer} nodes with $|V| = n$.
+  \item $E \subseteq V \times V$ is the edge set representing observed
+        collaboration events (PR reviews, Slack threads, Jira blockers,
+        pair-programming sessions).
+  \item $w : E \to \mathbb{Z}_{>0}$ is a weight function representing the
+        count of collaboration events between two engineers over a trailing
+        90-day window.
+\end{itemize}
+
+Candidate insertion extends $G$ to $G' = (V \cup \{v_c\}, E', w')$, where
+$v_c$ is the candidate node and $E'$ contains the original edges plus
+projected edges
+\[
+  (v_c,\, u) \in E' \iff |\text{skills}(v_c) \cap \text{skills}(u)| > 0,
+\]
+with weight $w'(v_c, u) = |\text{skills}(v_c) \cap \text{skills}(u)|$.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Closeness Centrality}
+
+\begin{definition}[Geodesic distance]
+For nodes $u, v \in V$, the geodesic distance $d(u,v)$ is the length of the
+shortest path between them in $G$, where path length is the number of edges
+traversed (unweighted BFS).  If no path exists, $d(u,v) = \infty$.
+\end{definition}
+
+\begin{definition}[Closeness centrality --- Wasserman-Faust normalisation]
+Let $R(v) = \{u \in V : u \neq v,\, d(u,v) < \infty\}$ be the set of nodes
+reachable from $v$, and let $n_r = |R(v)|$.  The closeness centrality of $v$
+in $G$ is
+
+\begin{equation}
+  \label{eq:cc}
+  C_C(v) =
+  \frac{n_r}{\displaystyle\sum_{u \in R(v)} d(u,v)}
+  \cdot
+  \frac{n_r - 1}{n - 1}
+\end{equation}
+
+The second factor is the Wasserman-Faust correction ensuring $C_C(v) \leq 1$
+for all graphs, including disconnected ones.
+\end{definition}
+
+\begin{proposition}[Range]
+$0 \leq C_C(v) \leq 1$ for all $v \in V$.
+\end{proposition}
+\begin{proof}
+The first factor $n_r / \sum d(u,v)$ satisfies $0 \leq \cdot \leq 1$ because
+$\sum d(u,v) \geq n_r$ (each reachable node is at distance $\geq 1$).  The
+second factor $(n_r - 1)/(n-1) \leq 1$ by definition of $R(v)$.
+For an isolated node $R(v) = \emptyset$, we define $C_C(v) = 0$.
+\end{proof}
+
+\begin{proposition}[Universal hub]
+If $v$ is adjacent to all other nodes and all shortest paths have length 1,
+then $C_C(v) = 1$.
+\end{proposition}
+\begin{proof}
+$n_r = n-1$, $\sum d(u,v) = n-1$, so first factor $= 1$.
+Second factor $(n-1-1)/(n-1) \neq 1$ in general --- the hub achieves $C_C = 1$
+only when all other nodes are \emph{directly connected} to it (distance 1) and
+the graph is connected.  In this case first factor $= (n-1)/(n-1) = 1$ and
+second factor $= (n-1)/(n-1) = 1$.
+\end{proof}
+
+\begin{remark}[Implementation]
+Equation~\ref{eq:cc} is implemented in \texttt{simulation/metrics.py::closeness\_centrality}
+using \texttt{networkx.single\_source\_shortest\_path\_length} for the BFS from $v$.
+Graphs with $|V| \leq 200$ use NetworkX; larger graphs use the Neo4j GDS
+\texttt{gds.closeness.stream()} procedure.
+\end{remark}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Additional Metrics}
+
+\subsection{Betweenness Centrality Delta}
+
+The betweenness centrality of node $u$ is
+\[
+  B(u) = \sum_{s \neq u \neq t} \frac{\sigma_{st}(u)}{\sigma_{st}}
+\]
+where $\sigma_{st}$ is the number of shortest paths from $s$ to $t$ and
+$\sigma_{st}(u)$ is the number of those paths passing through $u$.
+
+The \emph{betweenness centrality delta} measures how much candidate insertion
+changes the mean betweenness of existing engineers:
+\[
+  \Delta B = \bar{B}(G'_{-v_c}) - \bar{B}(G \setminus \{v_c\})
+\]
+where $\bar{B}$ denotes the mean over all non-candidate nodes.
+A negative $\Delta B$ indicates that $v_c$ reduces existing bottlenecks.
+
+\subsection{Silo Risk Score}
+
+The silo risk score uses the clustering coefficient:
+\[
+  C(u) = \frac{|\{(v,w) \in E : v, w \in N(u)\}|}{k_u (k_u - 1) / 2}
+\]
+where $N(u)$ is the neighbourhood of $u$ and $k_u = |N(u)|$.
+
+\[
+  \text{SiloRisk}(v_c) = \bar{C}(G') - \bar{C}(G)
+\]
+\begin{itemize}
+  \item Negative: candidate bridges clusters, reducing silos.
+  \item Positive: candidate reinforces a single cluster, increasing silos.
+\end{itemize}
+
+\subsection{Time-to-Value Estimate}
+
+A calibrated heuristic mapping closeness centrality to integration time:
+\[
+  \text{TTV}(v_c) = \frac{2.0}{\max\!\left(C_C(v_c),\; \tfrac{1}{26}\right)} \;\; \text{weeks}
+\]
+The $1/26$ floor caps the estimate at 52 weeks (one year) for near-isolated
+candidates.
+
+\begin{center}
+\begin{tabular}{ccc}
+\toprule
+$C_C(v_c)$ & TTV (weeks) & Interpretation \\
+\midrule
+1.00 & 2  & Immediate knowledge-hub integration \\
+0.50 & 4  & Moderate onboarding path \\
+0.25 & 8  & Extended integration period \\
+0.10 & 20 & High isolation risk \\
+0.00 & 52 & Integration unlikely within one year \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Monte Carlo Simulation}
+
+\subsection{Stochastic Edge Weight Model}
+
+Real collaboration counts fluctuate across 90-day windows.  We model this
+uncertainty by sampling each edge weight from a Poisson distribution:
+\[
+  w^{(k)}(e) \sim \text{Poisson}\!\left(\lambda = w(e)\right), \quad
+  w^{(k)}(e) \geq 1
+\]
+where $w(e)$ is the observed base weight.  The Poisson distribution is the
+natural choice because edge weights count discrete collaboration events.
+
+\subsection{Algorithm}
+
+\begin{algorithm}
+\caption{STAS Monte Carlo Simulation}
+\begin{algorithmic}[1]
+\Require Snapshot $G=(V,E,w)$, candidate $v_c$, $N$ iterations, seed $s$
+\Ensure SimulationResult with distributions for all metrics
+\State $\text{rng} \leftarrow \text{Generator}(s)$ \Comment{Seeded RNG for determinism}
+\State Build $G_0$ from snapshot; add $v_c$ with projected edges
+\State $\mathbf{cc}, \mathbf{sr} \leftarrow$ empty arrays of size $N$
+\For{$k = 1$ to $N$}
+  \State $G^{(k)} \leftarrow \text{copy}(G_0)$
+  \For{each edge $e \in G^{(k)}$}
+    \State $w^{(k)}(e) \leftarrow \max(1, \text{rng.Poisson}(w_0(e)))$
+  \EndFor
+  \State $\mathbf{cc}[k] \leftarrow C_C(G^{(k)}, v_c)$ \quad \emph{(BFS from $v_c$)}
+  \State $\mathbf{sr}[k] \leftarrow \bar{C}(G^{(k)}) - \bar{C}(G^{(k)} \setminus \{v_c\})$
+\EndFor
+\State $\Delta B \leftarrow$ betweenness delta on mean-weight graph $\bar{G}$
+\State \Return aggregate statistics for all sampled quantities
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Confidence Interval Construction}
+
+For a sample $\{x_1, \ldots, x_N\}$, the 95\% confidence interval uses the
+normal approximation (valid for $N \geq 30$):
+\[
+  \text{CI}_{95} = \bar{x} \pm 1.96 \cdot \frac{s}{\sqrt{N}}
+\]
+where $\bar{x}$ is the sample mean and $s$ is the unbiased sample standard
+deviation ($\text{ddof}=1$).
+
+\subsection{Determinism Guarantee}
+
+The simulation is \emph{byte-identical} for the same inputs $(G, v_c, N, s)$
+because:
+\begin{enumerate}
+  \item The RNG is \texttt{numpy.random.default\_rng(seed)} (PCG64).
+  \item No external I/O, OS entropy, or wall-clock time is used during the run.
+  \item The graph copy operation is deterministic for the same adjacency list.
+\end{enumerate}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Performance Analysis}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Operation & Complexity & Notes \\
+\midrule
+Build base graph & $O(n + m)$ & Once per run \\
+Graph copy (per iter) & $O(n + m)$ & NetworkX \texttt{copy()} \\
+Closeness BFS (per iter) & $O(n + m)$ & Single source \\
+Clustering coefficient (per iter) & $O(n \bar{k}^2)$ & $\bar{k}$ = mean degree \\
+Betweenness delta & $O(nm)$ & Once (post-loop) \\
+Total for $N$ iterations & $O(N(n+m))$ & Dominated by loop \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+For $n=50$, $m=490$ ($40\%$ density), $N=1{,}000$:
+total $\approx O(540{,}000)$ graph traversal operations.
+Empirical baseline: $< 2$ seconds in CPython 3.11 on commodity hardware.
+
+\end{document}

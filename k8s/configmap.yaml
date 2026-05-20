@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: stas-config
+  namespace: stas
+data:
+  # Non-secret runtime configuration. Secrets (passwords, API keys) come from
+  # the stas-secrets Secret or HashiCorp Vault at pod startup.
+  NEO4J_URI: "bolt://neo4j:7687"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+  REDIS_URL: "redis://redis:6379"
+  SIMULATION_GDS_THRESHOLD: "200"
+  LOG_LEVEL: "INFO"
+  LOG_FORMAT: "json"
+  METRICS_ENABLED: "true"
+  ENVIRONMENT: "production"
+  RELEASE: "0.4.0"
+  CORS_ORIGINS: '["https://app.stas.io"]'
+  NEXT_PUBLIC_API_URL: "https://api.stas.io"
+  NEXT_PUBLIC_APP_URL: "https://app.stas.io"

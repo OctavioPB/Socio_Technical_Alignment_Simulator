@@ -1,0 +1,67 @@
+# Default values for the STAS Helm chart.
+# Override with: helm install stas ./k8s/helm -f values.prod.yaml
+
+global:
+  imageRegistry: ghcr.io/stas
+  imageTag: "0.4.0"
+  imagePullPolicy: Always
+  namespace: stas
+
+api:
+  replicaCount: 2
+  image:
+    name: api
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 60
+  service:
+    port: 80
+    targetPort: 8000
+
+web:
+  replicaCount: 2
+  image:
+    name: web
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+  service:
+    port: 80
+    targetPort: 3000
+
+ingress:
+  enabled: true
+  className: nginx
+  apiHost: api.stas.io
+  webHost: app.stas.io
+  tlsSecret: stas-tls
+  certIssuer: letsencrypt-prod
+
+config:
+  neo4jUri: "bolt://neo4j:7687"
+  kafkaBootstrapServers: "kafka:9092"
+  redisUrl: "redis://redis:6379"
+  simulationGdsThreshold: "200"
+  logLevel: "INFO"
+  logFormat: "json"
+  metricsEnabled: "true"
+  environment: "production"
+  corsOrigins: '["https://app.stas.io"]'
+
+# Secrets are provided via external-secrets or kubectl create secret.
+# Never set real values here.
+secrets:
+  existingSecret: "stas-secrets"

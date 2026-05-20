@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: neo4j
+  namespace: stas
+  labels:
+    app: neo4j
+spec:
+  serviceName: neo4j
+  replicas: 1
+  selector:
+    matchLabels:
+      app: neo4j
+  template:
+    metadata:
+      labels:
+        app: neo4j
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: neo4j
+          image: neo4j:5.19-community
+          ports:
+            - name: http
+              containerPort: 7474
+            - name: bolt
+              containerPort: 7687
+          env:
+            - name: NEO4J_AUTH
+              valueFrom:
+                secretKeyRef:
+                  name: stas-secrets
+                  key: NEO4J_PASSWORD
+                  # Full value becomes "neo4j/<password>"
+            - name: NEO4J_PLUGINS
+              value: '["apoc","graph-data-science"]'
+            - name: NEO4J_dbms_security_procedures_unrestricted
+              value: "apoc.*,gds.*"
+            - name: NEO4J_dbms_memory_heap_initial__size
+              value: "512m"
+            - name: NEO4J_dbms_memory_heap_max__size
+              value: "2G"
+            - name: NEO4J_dbms_memory_pagecache_size
+              value: "1G"
+          livenessProbe:
+            tcpSocket:
+              port: 7687
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 7474
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "2Gi"
+            limits:
+              cpu: "2000m"
+              memory: "4Gi"
+          volumeMounts:
+            - name: neo4j-data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: neo4j-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 20Gi

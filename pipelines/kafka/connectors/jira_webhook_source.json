@@ -1,0 +1,37 @@
+{
+  "_doc": [
+    "Jira webhook bridge configuration.",
+    "Jira sends issue events to our endpoint when a 'blocks' link is resolved.",
+    "The STAS FastAPI endpoint POST /telemetry/jira/webhook produces to stas.jira.ticket.blocked.",
+    "",
+    "To configure in Jira:",
+    "  System → WebHooks → Create a WebHook",
+    "    URL:    https://<your-domain>/telemetry/jira/webhook",
+    "    Events: issue_updated (when 'blocks' link is removed = unblocked)",
+    "",
+    "Block detection logic:",
+    "  We capture BLOCKS_TICKET_OF when a blocking link is resolved.",
+    "  blocker_id = assignee of the blocking issue",
+    "  blocked_id = assignee of the blocked issue",
+    "  duration_hours = time from link creation to resolution",
+    "",
+    "This file documents the configuration; logic is in",
+    "apps/api/routers/telemetry.py::receive_jira_webhook."
+  ],
+  "name": "stas-jira-block-webhook-bridge",
+  "source": {
+    "type": "webhook",
+    "endpoint": "/telemetry/jira/webhook",
+    "auth": "bearer",
+    "secret_env": "JIRA_WEBHOOK_SECRET"
+  },
+  "sink": {
+    "topic": "stas.jira.ticket.blocked",
+    "schema": "pipelines/kafka/schemas/jira_block_event.avsc",
+    "serialization": "avro-schemaless"
+  },
+  "filter": {
+    "webhook_event": "jira:issue_link_deleted",
+    "link_type": "blocks"
+  }
+}

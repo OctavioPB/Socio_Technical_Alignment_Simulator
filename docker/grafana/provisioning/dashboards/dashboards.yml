@@ -1,0 +1,10 @@
+apiVersion: 1
+
+providers:
+  - name: STAS
+    orgId: 1
+    type: file
+    disableDeletion: true
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/provisioning/dashboards
