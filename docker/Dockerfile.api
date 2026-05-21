@@ -7,13 +7,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-COPY pyproject.toml ./
-RUN pip install --no-cache-dir -e ".[dev]"
+# Upgrade build tools
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
-# Copy source (overridden by volume mount in dev)
+# Copy source first (volume mounts override this in dev)
+COPY pyproject.toml ./
 COPY apps/api ./apps/api
 COPY simulation ./simulation
 COPY pipelines ./pipelines
+COPY graph ./graph
+
+# Install Python dependencies (non-editable; dev uses volume mounts for live reload)
+RUN pip install --no-cache-dir ".[dev]"
 
 CMD ["uvicorn", "apps.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

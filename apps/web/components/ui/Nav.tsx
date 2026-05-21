@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs"
 
 const NAV_LINKS = [
   { href: "/dashboard", label: "Dashboard" },
@@ -12,6 +11,7 @@ const NAV_LINKS = [
 
 const navLink: React.CSSProperties = {
   background: "none",
+  backgroundColor: "transparent",
   border: "none",
   color: "rgba(255,255,255,0.45)",
   cursor: "pointer",
@@ -21,7 +21,7 @@ const navLink: React.CSSProperties = {
   textTransform: "uppercase",
   padding: "5px 8px",
   borderRadius: 6,
-  transition: "color 0.15s",
+  transition: "color 0.15s, background-color 0.15s",
   textDecoration: "none",
 }
 
@@ -30,22 +30,81 @@ const navLinkActive: React.CSSProperties = {
   backgroundColor: "rgba(201,168,76,0.12)",
 }
 
-const signInBtn: React.CSSProperties = {
-  background: "none",
-  border: "1px solid rgba(255,255,255,0.2)",
-  borderRadius: 6,
-  color: "rgba(255,255,255,0.5)",
-  cursor: "pointer",
-  fontFamily: "var(--fb)",
-  fontSize: 9,
-  letterSpacing: "2px",
-  textTransform: "uppercase",
-  padding: "5px 10px",
+const hasValidClerkKey = /^pk_(test|live)_[A-Za-z0-9+/]{30,}/.test(
+  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? ""
+)
+
+function ClerkAuthCluster() {
+  // Lazy import so the module is never evaluated when Clerk is not configured
+  const { SignedIn, SignedOut, SignInButton, UserButton } =
+    require("@clerk/nextjs") as typeof import("@clerk/nextjs")
+
+  const pathname = usePathname()
+
+  return (
+    <>
+      <SignedIn>
+        {NAV_LINKS.map((link) => {
+          const isActive = pathname.startsWith(link.href)
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              style={isActive ? { ...navLink, ...navLinkActive } : navLink}
+            >
+              {link.label}
+            </Link>
+          )
+        })}
+        <UserButton
+          appearance={{ elements: { avatarBox: { width: 26, height: 26 } } }}
+        />
+      </SignedIn>
+      <SignedOut>
+        <SignInButton mode="modal">
+          <button
+            style={{
+              background: "none",
+              border: "1px solid rgba(255,255,255,0.2)",
+              borderRadius: 6,
+              color: "rgba(255,255,255,0.5)",
+              cursor: "pointer",
+              fontFamily: "var(--fb)",
+              fontSize: 9,
+              letterSpacing: "2px",
+              textTransform: "uppercase",
+              padding: "5px 10px",
+            }}
+          >
+            Sign in
+          </button>
+        </SignInButton>
+      </SignedOut>
+    </>
+  )
+}
+
+function DevNavLinks() {
+  const pathname = usePathname()
+  return (
+    <>
+      {NAV_LINKS.map((link) => {
+        const isActive = pathname.startsWith(link.href)
+        return (
+          <Link
+            key={link.href}
+            href={link.href}
+            style={isActive ? { ...navLink, ...navLinkActive } : navLink}
+          >
+            {link.label}
+          </Link>
+        )
+      })}
+    </>
+  )
 }
 
 export function Nav() {
-  const pathname = usePathname()
-
   return (
     <nav
       style={{
@@ -62,8 +121,7 @@ export function Nav() {
         zIndex: 100,
       }}
     >
-      {/* OPB Monogram */}
-      <Link href="/" style={{ textDecoration: "none" }}>
+      <Link href="/dashboard" style={{ textDecoration: "none" }}>
         <span>
           <span
             style={{
@@ -89,7 +147,6 @@ export function Nav() {
         </span>
       </Link>
 
-      {/* App title */}
       <span
         style={{
           fontFamily: "var(--fb)",
@@ -102,35 +159,8 @@ export function Nav() {
         Socio-Technical Alignment Simulator
       </span>
 
-      {/* Right cluster: nav links + auth */}
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-        <SignedIn>
-          {NAV_LINKS.map((link) => {
-            const isActive = pathname.startsWith(link.href)
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                style={isActive ? { ...navLink, ...navLinkActive } : navLink}
-              >
-                {link.label}
-              </Link>
-            )
-          })}
-          <UserButton
-            appearance={{
-              elements: {
-                avatarBox: { width: 26, height: 26 },
-              },
-            }}
-          />
-        </SignedIn>
-
-        <SignedOut>
-          <SignInButton mode="modal">
-            <button style={signInBtn}>Sign in</button>
-          </SignInButton>
-        </SignedOut>
+        {hasValidClerkKey ? <ClerkAuthCluster /> : <DevNavLinks />}
       </div>
     </nav>
   )

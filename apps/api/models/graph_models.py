@@ -75,7 +75,7 @@ class PathResult(BaseModel):
 
 
 class CandidateInsert(BaseModel):
-    id: Annotated[str, Field(default_factory=lambda: f"cand_{uuid.uuid4().hex[:8]}")] = ""
+    id: str = Field(default_factory=lambda: f"cand_{uuid.uuid4().hex[:8]}")
     name: str
     skills: list[str]
     github_url: str = ""

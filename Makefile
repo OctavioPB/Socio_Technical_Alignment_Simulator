@@ -1,3 +1,6 @@
+SHELL := bash
+.SHELLFLAGS := -euo pipefail -c
+
 .PHONY: dev dev-down dev-logs test lint graph-migrate graph-seed sim-run dag-test kafka-events \
         deploy-staging deploy-prod k8s-apply k8s-diff helm-lint load-test pii-audit bundle-analyze help
 
@@ -28,14 +31,13 @@ help:
 
 # ─── Docker Compose ────────────────────────────────────────────────────────────
 dev:
-	@test -f .env || (cp .env.example .env && echo "Created .env from .env.example — fill in secrets before continuing.")
 	docker compose up --build -d
-	@echo ""
-	@echo "Services:"
-	@echo "  Neo4j Browser  → http://localhost:7474"
-	@echo "  FastAPI docs   → http://localhost:8000/docs"
-	@echo "  Next.js app    → http://localhost:3000"
-	@echo "  Airflow UI     → http://localhost:8080  (admin / admin)"
+	$(info )
+	$(info Services:)
+	$(info   Neo4j Browser  -> http://localhost:7474)
+	$(info   FastAPI docs   -> http://localhost:8000/docs)
+	$(info   Next.js app    -> http://localhost:3000)
+	$(info   Airflow UI     -> http://localhost:8080  (admin / admin))
 
 dev-down:
 	docker compose down -v

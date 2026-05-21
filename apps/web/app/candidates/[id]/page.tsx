@@ -271,7 +271,7 @@ export default async function CandidatePage({ params }: PageProps) {
                 overflow: "hidden",
               }}
             >
-              <div style={{ height: 3, backgroundColor: posStyle.dot }} />
+              <div style={{ height: 3, backgroundColor: "var(--gold)" }} />
               <div style={{ padding: "20px 22px" }}>
                 <Eyebrow>Graph position</Eyebrow>
                 <div
@@ -340,7 +340,7 @@ export default async function CandidatePage({ params }: PageProps) {
                 overflow: "hidden",
               }}
             >
-              <div style={{ height: 3, backgroundColor: "var(--primary-60)" }} />
+              <div style={{ height: 3, backgroundColor: "var(--gold)" }} />
               <div style={{ padding: "20px 22px" }}>
                 <Eyebrow>Collaboration vector</Eyebrow>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>

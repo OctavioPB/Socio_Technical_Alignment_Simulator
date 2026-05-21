@@ -1,21 +1,18 @@
-import type { NextConfig } from "next"
-
+/** @type {import('next').NextConfig} */
 const withBundleAnalyzer =
   process.env.ANALYZE === "true"
-    ? require("@next/bundle-analyzer")({ enabled: true })
-    : (config: NextConfig) => config
+    ? (await import("@next/bundle-analyzer")).default({ enabled: true })
+    : (config) => config
 
-const nextConfig: NextConfig = {
+const nextConfig = {
   reactStrictMode: true,
   output: "standalone",
 
-  // Expose Sentry DSN to client bundle (empty string = Sentry disabled)
   env: {
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN ?? "",
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? "",
   },
 
-  // Source maps in production for Sentry stack traces
   productionBrowserSourceMaps: process.env.NODE_ENV === "production",
 }
 

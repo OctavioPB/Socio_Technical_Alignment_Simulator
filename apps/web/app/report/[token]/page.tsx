@@ -233,7 +233,7 @@ export default async function ReportPage({ params }: PageProps) {
               overflow: "hidden",
             }}
           >
-            <div style={{ height: 3, backgroundColor: "var(--primary-60)" }} />
+            <div style={{ height: 3, backgroundColor: "var(--gold)" }} />
             <div style={{ padding: "24px 28px" }}>
               <Eyebrow>Time to Value</Eyebrow>
               <div
@@ -294,7 +294,7 @@ export default async function ReportPage({ params }: PageProps) {
               overflow: "hidden",
             }}
           >
-            <div style={{ height: 3, backgroundColor: silo.color }} />
+            <div style={{ height: 3, backgroundColor: "var(--gold)" }} />
             <div style={{ padding: "24px 28px" }}>
               <Eyebrow>Silo Risk</Eyebrow>
               <div
@@ -372,7 +372,7 @@ export default async function ReportPage({ params }: PageProps) {
               overflow: "hidden",
             }}
           >
-            <div style={{ height: 3, backgroundColor: "var(--primary)" }} />
+            <div style={{ height: 3, backgroundColor: "var(--gold)" }} />
             <div style={{ padding: "24px 28px" }}>
               <Eyebrow>Betweenness Delta</Eyebrow>
               <div
@@ -490,7 +490,7 @@ export default async function ReportPage({ params }: PageProps) {
             marginBottom: 24,
           }}
         >
-          <div style={{ height: 3, backgroundColor: "var(--primary)" }} />
+          <div style={{ height: 3, backgroundColor: "var(--gold)" }} />
           <div style={{ padding: "24px 28px" }}>
             <Eyebrow>Recommendation</Eyebrow>
             <p

@@ -277,20 +277,6 @@ export default async function DashboardPage() {
                   <div style={{ height: 3, backgroundColor: "var(--gold)" }} />
 
                   <div style={{ padding: "22px 24px" }}>
-                    {/* Ghosted watermark number */}
-                    <div
-                      style={{
-                        fontFamily: "'Fraunces', Georgia, serif",
-                        fontSize: 40,
-                        fontWeight: 300,
-                        color: "#f1f5f9",
-                        lineHeight: 1,
-                        marginBottom: 2,
-                        userSelect: "none",
-                      }}
-                    >
-                      #
-                    </div>
                     <div style={{ width: 28, height: 3, backgroundColor: "var(--gold)", borderRadius: 2, margin: "6px 0 12px" }} />
 
                     <div
@@ -545,7 +531,7 @@ export default async function DashboardPage() {
                       cursor: "pointer",
                     }}
                   >
-                    <div style={{ height: 3, backgroundColor: posColor }} />
+                    <div style={{ height: 3, backgroundColor: "var(--gold)" }} />
                     <div style={{ padding: "16px 18px" }}>
                       {/* Position badge */}
                       <div

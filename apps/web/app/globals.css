@@ -1,17 +1,47 @@
 :root {
+  /* Colour */
   --primary:    #003366;
-  --primary-80: #1A4D80;
+  --primary-80: #1a4d80;
   --primary-60: #336699;
-  --primary-30: #99BBDD;
-  --primary-10: #E0EAF4;
-  --gold:       #C8982A;
-  --gold-light: #E8C46A;
-  --dark:       #1C1C2E;
-  --mid:        #6B7280;
-  --light:      #F4F6F9;
-  --white:      #FFFFFF;
-  --fd:         'Fraunces', Georgia, serif;
-  --fb:         'Plus Jakarta Sans', sans-serif;
+  --primary-30: #99bbdd;
+  --primary-10: #e0eaf4;
+  --gold:       #c8982a;
+  --gold-light: #e8c46a;
+  --dark:       #1c1c2e;
+  --mid:        #6b7280;
+  --light:      #f4f6f9;
+  --white:      #ffffff;
+
+  /* Typography */
+  --fd: 'Fraunces', Georgia, serif;
+  --fb: 'Plus Jakarta Sans', sans-serif;
+
+  /* Spacing (8-point grid) */
+  --space-4:  4px;  --space-8:  8px;  --space-12: 12px;
+  --space-16: 16px; --space-24: 24px; --space-32: 32px;
+  --space-40: 40px; --space-48: 48px; --space-64: 64px;
+
+  /* Border radius */
+  --radius-sm:   6px;
+  --radius-md:   12px;
+  --radius-lg:   14px;
+  --radius-pill: 20px;
+
+  /* Shadows */
+  --shadow-card: 0 1px 4px rgba(0, 51, 102, 0.08);
+  --shadow-soft: 0 1px 6px rgba(0, 51, 102, 0.09);
+
+  /* Layout */
+  --max-width-content:   1200px;
+  --max-width-dashboard: 1300px;
+  --nav-height: 52px;
+
+  /* Semantic status colours */
+  --status-green:  #27b97c;
+  --status-red:    #e03448;
+  --status-orange: #f07020;
+  --status-purple: #7c4dbd;
+  --status-blue:   #003366;
 }
 
 *,
@@ -35,19 +65,3 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── Dark mode — follows system preference ─────────────────────────────────── */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --light:  #111827;
-    --white:  #1F2937;
-    --dark:   #F9FAFB;
-    --mid:    #9CA3AF;
-    /* Primary and gold remain the same — they sit on dark backgrounds already */
-    --primary-10: rgba(0, 51, 102, 0.4);
-  }
-
-  body {
-    background: var(--light);
-    color: var(--dark);
-  }
-}

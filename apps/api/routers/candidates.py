@@ -11,6 +11,8 @@ import logging
 import uuid
 from typing import Annotated
 
+import anthropic as _anthropic
+
 from fastapi import APIRouter, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
 
@@ -75,11 +77,28 @@ async def extract(request: Request, body: ExtractRequest) -> CandidateProfile:
     Results are cached in Redis for 7 days.  Subsequent requests with the same
     GitHub URL + transcript will be served from cache without calling Claude.
     """
-    profile = await extract_candidate_profile(
-        github_url=body.github_url,
-        candidate_id=body.candidate_id,
-        transcript=body.transcript,
-    )
+    try:
+        profile = await extract_candidate_profile(
+            github_url=body.github_url,
+            candidate_id=body.candidate_id,
+            transcript=body.transcript,
+        )
+    except _anthropic.AuthenticationError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Anthropic API key is missing or invalid. Set ANTHROPIC_API_KEY in .env.",
+        )
+    except _anthropic.APIError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Claude API error: {exc}",
+        )
+    except Exception as exc:
+        logger.exception("Unexpected error during candidate extraction")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Extraction failed: {exc}",
+        )
 
     # Persist profile for later retrieval by candidate_id
     client = await _redis()
