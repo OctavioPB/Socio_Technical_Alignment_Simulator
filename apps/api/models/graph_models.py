@@ -155,3 +155,60 @@ class CandidateProfile(BaseModel):
             collaboration_vector=self.collaboration_vector.as_list(),
             team_id=team_id,
         )
+
+
+# ── Attrition analysis models ─────────────────────────────────────────────────
+
+
+class AttritionRequest(BaseModel):
+    team_id: str
+    engineer_id: str
+
+
+class EngineerImpact(BaseModel):
+    engineer_id: str
+    name: str
+    closeness_before: float
+    closeness_after: float
+    closeness_delta_pct: float   # positive = connectivity got worse
+    betweenness_before: float
+    betweenness_after: float
+
+
+class AttritionResult(BaseModel):
+    team_id: str
+    removed_engineer_id: str
+    removed_engineer_name: str
+    removed_engineer_seniority: str
+    removed_engineer_skills: list[str]
+    baseline_avg_closeness: float
+    post_removal_avg_closeness: float
+    closeness_drop_pct: float    # positive = connectivity dropped
+    baseline_components: int
+    post_removal_components: int
+    graph_fragmented: bool
+    engineer_impacts: list[EngineerImpact]  # sorted by closeness_delta_pct desc
+
+
+# ── Silo / bus-factor risk models ─────────────────────────────────────────────
+
+
+class EngineerRisk(BaseModel):
+    engineer_id: str
+    name: str
+    seniority: str
+    skills: list[str]
+    closeness: float
+    betweenness: float
+    degree: int
+    removal_impact_pct: float   # % drop in team avg closeness if removed
+    is_critical_path: bool      # betweenness > mean + 1 std dev
+
+
+class TeamRisk(BaseModel):
+    team_id: str
+    resilience_score: float     # 0–1; higher = more resilient
+    bus_factor: int             # engineers whose removal drops connectivity > 15 %
+    graph_density: float
+    engineer_count: int
+    engineers: list[EngineerRisk]  # sorted by removal_impact_pct desc

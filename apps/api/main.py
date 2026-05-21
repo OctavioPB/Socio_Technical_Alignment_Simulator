@@ -14,7 +14,7 @@ from apps.api.core.logging_config import configure_logging
 from apps.api.core.metrics import MetricsMiddleware, metrics_router
 from apps.api.core.neo4j_driver import create_driver
 from apps.api.core.rate_limit import limiter
-from apps.api.routers import admin, candidates, graph, simulation, telemetry
+from apps.api.routers import admin, analysis, candidates, graph, simulation, telemetry
 
 # ── Logging (must happen before any other logger.X calls) ─────────────────────
 configure_logging(level=settings.log_level, fmt=settings.log_format)
@@ -135,6 +135,7 @@ app.include_router(graph.router)
 app.include_router(telemetry.router)
 app.include_router(simulation.router)
 app.include_router(candidates.router)
+app.include_router(analysis.router)
 app.include_router(admin.router)
 
 if settings.metrics_enabled:
