@@ -7,6 +7,7 @@ const NAV_LINKS = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/teams", label: "Teams" },
   { href: "/simulate", label: "Simulate" },
+  { href: "/info", label: "Info" },
 ]
 
 const navLink: React.CSSProperties = {
