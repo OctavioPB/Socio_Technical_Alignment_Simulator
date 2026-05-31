@@ -67,8 +67,8 @@ export function GraphLoader({ teamId, initialSnapshot, snapshots, centrality }: 
       </div>
 
       {/* Graph canvas */}
-      <div style={{ flex: 1, minHeight: 600 }}>
-        <TeamGraph height={640} />
+      <div style={{ flex: 1, minHeight: 680 }}>
+        <TeamGraph height={720} />
       </div>
     </div>
   )

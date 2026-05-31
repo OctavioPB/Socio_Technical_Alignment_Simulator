@@ -125,7 +125,7 @@ export function Nav() {
         zIndex: 100,
       }}
     >
-      <Link href="/dashboard" style={{ textDecoration: "none" }}>
+      <Link href="/dashboard" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 14 }}>
         <span>
           <span
             style={{
@@ -149,19 +149,18 @@ export function Nav() {
             PB
           </em>
         </span>
+        <span
+          style={{
+            fontFamily: "var(--fb)",
+            fontSize: 9,
+            letterSpacing: "3px",
+            textTransform: "uppercase",
+            color: "rgba(255,255,255,.4)",
+          }}
+        >
+          Socio-Technical Alignment Simulator
+        </span>
       </Link>
-
-      <span
-        style={{
-          fontFamily: "var(--fb)",
-          fontSize: 9,
-          letterSpacing: "3px",
-          textTransform: "uppercase",
-          color: "rgba(255,255,255,.4)",
-        }}
-      >
-        Socio-Technical Alignment Simulator
-      </span>
 
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
         {hasValidClerkKey ? <ClerkAuthCluster /> : <DevNavLinks />}

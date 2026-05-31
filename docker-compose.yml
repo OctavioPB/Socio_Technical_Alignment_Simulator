@@ -2,7 +2,7 @@ name: socio_technical_alignement_simulator
 
 # ─── Shared Airflow config ────────────────────────────────────────────────────
 x-airflow-common: &airflow-common
-  image: apache/airflow:2.8.0
+  image: apache/airflow:2.8.0-python3.11
   env_file: .env
   environment:
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
@@ -32,13 +32,19 @@ services:
   # ─── Graph DB ──────────────────────────────────────────────────────────────
   neo4j:
     image: neo4j:5.19-community
+    hostname: neo4j
     environment:
       NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:-changeme_dev}
-      NEO4J_PLUGINS: '["apoc","graph-data-science"]'
-      NEO4J_dbms_security_procedures_unrestricted: "apoc.*,gds.*"
+      # GDS is excluded: no compatible build exists for Neo4j 5.19 community via
+      # the auto-download mechanism (versions.json). The simulation engine routes
+      # graphs ≤200 nodes through NetworkX (in-process), so GDS is only needed
+      # in production at scale. Add it back via a pinned JAR mount when deploying
+      # to a cluster with >200-engineer teams.
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_dbms_security_procedures_unrestricted: "apoc.*"
     ports:
-      - "7474:7474"   # Browser
-      - "7687:7687"   # Bolt
+      - "7476:7474"   # Browser  (7474 taken by another project on this machine)
+      - "7688:7687"   # Bolt     (7687 taken by another project on this machine)
     volumes:
       - neo4j-data:/data
       - neo4j-logs:/logs
@@ -223,7 +229,7 @@ services:
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8000
     ports:
-      - "3000:3000"
+      - "3001:3000"   # 3000 taken by another project on this machine
     volumes:
       - ./apps/web:/app
       - /app/node_modules

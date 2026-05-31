@@ -25,8 +25,8 @@ export function getTeamColor(team: string, allTeams: string[]): string {
  * Betweenness centrality → node radius (pixels).
  * Range: [NODE_RADIUS_MIN, NODE_RADIUS_MAX]
  */
-const NODE_RADIUS_MIN = 5
-const NODE_RADIUS_MAX = 18
+const NODE_RADIUS_MIN = 7
+const NODE_RADIUS_MAX = 22
 
 export function nodeRadius(betweenness: number, maxBetweenness: number): number {
   if (maxBetweenness === 0) return NODE_RADIUS_MIN
@@ -35,22 +35,39 @@ export function nodeRadius(betweenness: number, maxBetweenness: number): number 
 }
 
 /**
- * Edge weight → opacity [0.12, 0.80].
- * Log-scale so low-weight edges remain visible while high-weight edges stand out.
+ * Edge weight → opacity [0.22, 0.85].
+ * Log-scale so light edges stay visible while heavy edges dominate.
  */
 export function edgeOpacity(weight: number, maxWeight: number): number {
-  if (maxWeight === 0) return 0.15
+  if (maxWeight === 0) return 0.25
   const logW = Math.log1p(weight)
   const logMax = Math.log1p(maxWeight)
-  return 0.12 + (logW / logMax) * 0.68
+  return 0.22 + (logW / logMax) * 0.63
 }
 
 /**
- * Edge weight → stroke width [0.5, 3].
+ * Edge weight → stroke width [1, 4].
  */
 export function edgeWidth(weight: number, maxWeight: number): number {
-  if (maxWeight === 0) return 0.5
-  return 0.5 + (weight / maxWeight) * 2.5
+  if (maxWeight === 0) return 1
+  return 1 + (weight / maxWeight) * 3
+}
+
+/**
+ * Relationship type → colour + display label.
+ * Each collaboration channel gets a distinct colour so the graph immediately
+ * communicates what kind of connection two engineers have.
+ */
+export const RELATIONSHIP_META: Record<string, { color: string; label: string }> = {
+  REVIEWS_PR_OF:      { color: "#003366", label: "PR Review" },
+  RESOLVES_DOUBT_FOR: { color: "#27B97C", label: "Knowledge Help" },
+  PAIR_PROGRAMS_WITH: { color: "#C8982A", label: "Pair Programming" },
+  BLOCKS_TICKET_OF:   { color: "#E03448", label: "Ticket Block" },
+  SHARES_DOMAIN_WITH: { color: "#7C4DBD", label: "Shared Domain" },
+}
+
+export function edgeColor(relationship: string): string {
+  return RELATIONSHIP_META[relationship]?.color ?? "#003366"
 }
 
 /**

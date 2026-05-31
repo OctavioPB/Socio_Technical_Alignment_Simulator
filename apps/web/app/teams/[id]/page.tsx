@@ -10,23 +10,18 @@ import { Nav } from "@/components/ui/Nav"
 import { Footer } from "@/components/ui/Footer"
 import { Eyebrow } from "@/components/ui/Eyebrow"
 import { GraphLoader } from "./GraphLoader"
-import type { CentralityScore, GraphSnapshot, SnapshotMeta } from "@/lib/api/types"
+import type { CentralityScore, GraphSnapshot } from "@/lib/api/types"
 
 interface PageProps {
   params: { id: string }
-  searchParams: { snapshot?: string }
 }
 
-async function fetchSnapshot(
-  teamId: string,
-  snapshotId?: string,
-): Promise<GraphSnapshot | null> {
+// Server-side fetches use the internal Docker network URL, not the browser-facing one.
+const API = process.env.API_URL ?? "http://localhost:8000"
+
+async function fetchSnapshot(teamId: string): Promise<GraphSnapshot | null> {
   try {
-    const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
-    const path = snapshotId
-      ? `/graph/teams/${teamId}/snapshot/${snapshotId}`
-      : `/graph/teams/${teamId}/snapshot`
-    const res = await fetch(`${apiBase}${path}`, { cache: "no-store" })
+    const res = await fetch(`${API}/graph/teams/${teamId}`, { cache: "no-store" })
     if (!res.ok) return null
     return res.json()
   } catch {
@@ -34,11 +29,10 @@ async function fetchSnapshot(
   }
 }
 
-async function fetchSnapshots(teamId: string): Promise<SnapshotMeta[]> {
+async function fetchCentrality(teamId: string): Promise<CentralityScore[]> {
   try {
-    const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
-    const res = await fetch(`${apiBase}/graph/teams/${teamId}/snapshots`, {
-      next: { revalidate: 60 },
+    const res = await fetch(`${API}/graph/metrics/${teamId}`, {
+      next: { revalidate: 300 },
     })
     if (!res.ok) return []
     return res.json()
@@ -47,33 +41,13 @@ async function fetchSnapshots(teamId: string): Promise<SnapshotMeta[]> {
   }
 }
 
-async function fetchCentrality(
-  teamId: string,
-  snapshotId: string,
-): Promise<CentralityScore[]> {
-  try {
-    const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
-    const res = await fetch(
-      `${apiBase}/graph/teams/${teamId}/snapshot/${snapshotId}/centrality`,
-      { next: { revalidate: 300 } },
-    )
-    if (!res.ok) return []
-    return res.json()
-  } catch {
-    return []
-  }
-}
-
-export default async function TeamGraphPage({ params, searchParams }: PageProps) {
+export default async function TeamGraphPage({ params }: PageProps) {
   const teamId = params.id
-  const [snapshot, snapshots] = await Promise.all([
-    fetchSnapshot(teamId, searchParams.snapshot),
-    fetchSnapshots(teamId),
-  ])
+  const snapshot = await fetchSnapshot(teamId)
 
   if (!snapshot) notFound()
 
-  const centrality = await fetchCentrality(teamId, snapshot.snapshot_id)
+  const centrality = await fetchCentrality(teamId)
 
   const capturedDate = new Date(snapshot.captured_at).toLocaleDateString("en-US", {
     year: "numeric",
@@ -165,7 +139,7 @@ export default async function TeamGraphPage({ params, searchParams }: PageProps)
         <GraphLoader
           teamId={teamId}
           initialSnapshot={snapshot}
-          snapshots={snapshots}
+          snapshots={[]}
           centrality={centrality}
         />
       </section>

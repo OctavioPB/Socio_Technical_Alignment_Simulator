@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
 
     # ── CORS ──────────────────────────────────────────────────────────────────
-    cors_origins: list[str] = ["http://localhost:3000"]
+    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:3001"]
 
     # ── Auth (Clerk JWT) ──────────────────────────────────────────────────────
     # Set to your Clerk JWKS URL in prod, e.g.:
