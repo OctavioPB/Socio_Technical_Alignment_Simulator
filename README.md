@@ -272,9 +272,7 @@ Both require Neo4j and Redis to be reachable at the URLs in your `.env`.
 ├── tests/
 │   └── load/sim_load_test.js   # k6 load test
 ├── docker-compose.yml
-├── Makefile
-├── PLAN.md                     # Sprint roadmap (S0–S9, all complete)
-└── CLAUDE.md                   # Engineering standards for this repo
+└── Makefile                 
 ```
 
 ---
